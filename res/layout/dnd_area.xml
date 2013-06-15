@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:background="#aaaaff"
+>
+
+
+    <ImageView
+        android:id="@+id/target1"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/target1"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="4dp"
+     />
+    <ImageView
+        android:id="@+id/target2"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/target2"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+    />
+
+    <ImageView
+        android:id="@+id/target3"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/target3"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="4dp"
+    />
+
+    <ImageView
+        android:id="@+id/draggable"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/ic_launcher"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="4dp"
+    />
+</RelativeLayout>

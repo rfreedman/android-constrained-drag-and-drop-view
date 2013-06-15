@@ -1,0 +1,5 @@
+<resources>
+    <declare-styleable name="ConstrainedDragAndDropView">
+        <attr name="layoutId"    format="reference" />
+    </declare-styleable>
+</resources>
