@@ -21,6 +21,9 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     private boolean dragging = false;
     private int pointerId;
 
+    private int selectedDropTargetIndex = -1;
+    private int lastSelectedDropTargetIndex = -1;
+
     private boolean allowHorizontalDrag = true;
     private boolean allowVerticalDrag = true;
 
@@ -133,7 +136,11 @@ public class ConstrainedDragAndDropView extends LinearLayout {
                         int dropTargetIndex = findDropTargetIndexUnderDragHandle();
                         if(dropTargetIndex >= 0) {
                             Log.d("drag", "drop on target " + dropTargetIndex);
+                            selectDropTarget(dropTargetIndex);
                             snapDragHandleToDropTarget(dropTargetIndex);
+                        } else {
+                            deselectDropTarget();
+                            snapDragHandleToDropTarget(lastSelectedDropTargetIndex);
                         }
                     }
                     break;
@@ -144,6 +151,9 @@ public class ConstrainedDragAndDropView extends LinearLayout {
                         int dropTargetIndex = findDropTargetIndexUnderDragHandle();
                         if(dropTargetIndex >= 0) {
                             Log.d("drag", "hover on target " + dropTargetIndex);
+                            selectDropTarget(dropTargetIndex);
+                        } else {
+                            deselectDropTarget();
                         }
                     }
                     break;
@@ -276,5 +286,19 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         } while(false);
 
         return collision;
+    }
+
+    private void selectDropTarget(int index) {
+        deselectDropTarget();
+        selectedDropTargetIndex = index;
+        dropTargets.get(selectedDropTargetIndex).setSelected(true);
+    }
+
+    private void deselectDropTarget() {
+        if(selectedDropTargetIndex > -1) {
+            dropTargets.get(selectedDropTargetIndex).setSelected(false);
+            lastSelectedDropTargetIndex = selectedDropTargetIndex;
+            selectedDropTargetIndex = -1;
+        }
     }
 }

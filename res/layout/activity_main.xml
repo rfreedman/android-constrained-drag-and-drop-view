@@ -19,41 +19,41 @@
             android:background="#aaaaff"
         >
             <ImageView
-                    android:id="@+id/target1"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/target1"
-                    android:layout_alignParentLeft="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="4dp"
-                    />
+                android:id="@+id/target1"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/drop_target_1"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="4dp"
+            />
             <ImageView
-                    android:id="@+id/target2"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/target2"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    />
+                android:id="@+id/target2"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/drop_target_2"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+            />
 
             <ImageView
-                    android:id="@+id/target3"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/target3"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginRight="4dp"
-                    />
+                android:id="@+id/target3"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/drop_target_3"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="4dp"
+            />
 
             <ImageView
-                    android:id="@+id/draggable"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/ic_launcher"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="4dp"
-                    />
+                android:id="@+id/draggable"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_launcher"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="4dp"
+            />
         </RelativeLayout>
     </net.greybeardedgeek.ConstrainedDragAndDropView>
 
