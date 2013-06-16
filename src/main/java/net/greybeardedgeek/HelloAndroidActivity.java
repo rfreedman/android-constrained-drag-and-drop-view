@@ -13,6 +13,8 @@ public class HelloAndroidActivity extends Activity {
         setContentView(R.layout.activity_main);
         ConstrainedDragAndDropView dndView = (ConstrainedDragAndDropView) findViewById(R.id.dndView);
         dndView.setDragHandle(findViewById(R.id.draggable));
+        dndView.setAllowVerticalDrag(false);
+
         dndView.addDropTarget(findViewById(R.id.target1));
         dndView.addDropTarget(findViewById(R.id.target2));
         dndView.addDropTarget(findViewById(R.id.target3));

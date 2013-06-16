@@ -1,19 +1,14 @@
 package net.greybeardedgeek;
 
 import android.annotation.SuppressLint;
-import android.content.ClipData;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +20,9 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     private List<View> dropTargets = new ArrayList<View>();
     private boolean dragging = false;
     private int pointerId;
+
+    private boolean allowHorizontalDrag = true;
+    private boolean allowVerticalDrag = true;
 
     public ConstrainedDragAndDropView(Context context) {
         super(context);
@@ -73,6 +71,22 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         dropTargets.add(target);
     }
 
+    public boolean isAllowHorizontalDrag() {
+        return allowHorizontalDrag;
+    }
+
+    public void setAllowHorizontalDrag(boolean allowHorizontalDrag) {
+        this.allowHorizontalDrag = allowHorizontalDrag;
+    }
+
+    public boolean isAllowVerticalDrag() {
+        return allowVerticalDrag;
+    }
+
+    public void setAllowVerticalDrag(boolean allowVerticalDrag) {
+        this.allowVerticalDrag = allowVerticalDrag;
+    }
+
     private void applyAttrs(Context context, AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.ConstrainedDragAndDropView, 0, 0);
 
@@ -115,9 +129,11 @@ public class ConstrainedDragAndDropView extends LinearLayout {
                         dragging = false;
                         Log.d("drag", "drag end");
 
-                        int dropTargetIndex = findDropTargetIndex(motionEvent);
+                        updateDragPosition(motionEvent);
+                        int dropTargetIndex = findDropTargetIndexUnderDragHandle();
                         if(dropTargetIndex >= 0) {
                             Log.d("drag", "drop on target " + dropTargetIndex);
+                            snapDragHandleToDropTarget(dropTargetIndex);
                         }
                     }
                     break;
@@ -125,8 +141,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
                case MotionEvent.ACTION_MOVE:
                     if (dragging && motionEvent.getPointerId(0) == pointerId) {
                         updateDragPosition(motionEvent);
-
-                        int dropTargetIndex = findDropTargetIndex(motionEvent);
+                        int dropTargetIndex = findDropTargetIndexUnderDragHandle();
                         if(dropTargetIndex >= 0) {
                             Log.d("drag", "hover on target " + dropTargetIndex);
                         }
@@ -143,18 +158,39 @@ public class ConstrainedDragAndDropView extends LinearLayout {
 
     @SuppressLint("NewApi")
     private void updateDragPosition(MotionEvent motionEvent) {
-        float candidateX = motionEvent.getX() - dragHandle.getWidth() / 2;
-        if(candidateX > 0 && candidateX + dragHandle.getWidth() < this.getWidth()) {
-            dragHandle.setX(candidateX);
+
+        if(allowHorizontalDrag) {
+            float candidateX = motionEvent.getX() - dragHandle.getWidth() / 2;
+            if(candidateX > 0 && candidateX + dragHandle.getWidth() < this.getWidth()) {
+                dragHandle.setX(candidateX);
+            }
         }
 
-        /* if allowing vertical movement...
-        float candidateY = motionEvent.getY() - dragHandle.getHeight() / 2;
-        if(candidateY > 0 && candidateY + dragHandle.getHeight() < this.getHeight()) {
-            dragHandle.setY(candidateY);
+        if(allowVerticalDrag) {
+            float candidateY = motionEvent.getY() - dragHandle.getHeight() / 2;
+            if(candidateY > 0 && candidateY + dragHandle.getHeight() < this.getHeight()) {
+                dragHandle.setY(candidateY);
+            }
         }
-        */
     }
+
+    @SuppressLint("NewApi")
+    private void snapDragHandleToDropTarget(int dropTargetIndex) {
+
+        View dropTarget = dropTargets.get(dropTargetIndex);
+        float xCenter = dropTarget.getX() + dropTarget.getWidth() / 2;
+        float yCenter = dropTarget.getY() + dropTarget.getHeight() / 2;
+
+        float xOffset = dragHandle.getWidth() / 2;
+        float yOffset = dragHandle.getHeight() / 2;
+
+        float x = xCenter - xOffset;
+        float y = yCenter - yOffset;
+
+        dragHandle.setX(x);
+        dragHandle.setY(y);
+    }
+
 
     private boolean isDragHandleTouch(MotionEvent motionEvent) {
         Point point = new Point(
@@ -182,6 +218,18 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         return dropTargetIndex;
     }
 
+    int findDropTargetIndexUnderDragHandle() {
+        int dropTargetIndex = -1;
+        for(int i = 0; i < dropTargets.size(); i++) {
+            if(isCollision(dragHandle, dropTargets.get(i))) {
+                dropTargetIndex = i;
+                break;
+            }
+        }
+
+        return dropTargetIndex;
+    }
+
     /**
      * Determines whether a raw screen coordinate is within the bounds of the specified view
      * @param point - Point containing screen coordinates
@@ -199,5 +247,34 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         int bottom = top + view.getHeight();
 
         return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
+    }
+
+    @SuppressLint("NewApi")
+    private boolean isCollision(View view1, View view2) {
+        boolean collision = false;
+
+
+        do {
+            if(view1.getY() + view1.getHeight() < view2.getY()) {
+                break;
+            }
+
+            if(view1.getY() > view2.getY() + view2.getHeight()) {
+                break;
+            }
+
+            if(view1.getX() > view2.getX() + view2.getWidth()) {
+                break;
+            }
+
+            if(view1.getX() + view1.getWidth() < view2.getX()) {
+                break;
+            }
+
+            collision = true;
+
+        } while(false);
+
+        return collision;
     }
 }
