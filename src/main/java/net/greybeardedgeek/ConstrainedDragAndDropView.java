@@ -76,12 +76,15 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     private void applyAttrs(Context context, AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.ConstrainedDragAndDropView, 0, 0);
 
+
         try {
+            /*
             layoutId = a.getResourceId(R.styleable.ConstrainedDragAndDropView_layoutId, 0);
 
             if (layoutId > 0) {
                 LayoutInflater.from(context).inflate(layoutId, this, true);
             }
+            */
         } finally {
             a.recycle();
         }
