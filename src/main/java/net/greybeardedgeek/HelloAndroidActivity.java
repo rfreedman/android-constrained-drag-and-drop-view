@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Toast;
 
 public class HelloAndroidActivity extends Activity {
 
@@ -18,6 +20,13 @@ public class HelloAndroidActivity extends Activity {
         dndView.addDropTarget(findViewById(R.id.target1));
         dndView.addDropTarget(findViewById(R.id.target2));
         dndView.addDropTarget(findViewById(R.id.target3));
+
+        dndView.setDropListener(new ConstrainedDragAndDropView.DropListener() {
+            @Override
+            public void onDrop(int dropIndex, View dropTarget) {
+                Toast.makeText(HelloAndroidActivity.this, "Dropped on Target " + dropIndex, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

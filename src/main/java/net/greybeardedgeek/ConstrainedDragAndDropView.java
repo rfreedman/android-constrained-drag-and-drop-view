@@ -15,17 +15,23 @@ import java.util.List;
 
 public class ConstrainedDragAndDropView extends LinearLayout {
 
-    private int layoutId;
-    private View dragHandle;
-    private List<View> dropTargets = new ArrayList<View>();
-    private boolean dragging = false;
-    private int pointerId;
+    protected View dragHandle;
+    protected List<View> dropTargets = new ArrayList<View>();
+    protected boolean dragging = false;
+    protected int pointerId;
 
-    private int selectedDropTargetIndex = -1;
-    private int lastSelectedDropTargetIndex = -1;
+    protected int selectedDropTargetIndex = -1;
+    protected int lastSelectedDropTargetIndex = -1;
+    protected int lastDroppedIndex = -1;
 
-    private boolean allowHorizontalDrag = true;
-    private boolean allowVerticalDrag = true;
+    protected boolean allowHorizontalDrag = true;
+    protected boolean allowVerticalDrag = true;
+
+    protected DropListener dropListener;
+
+    public interface DropListener {
+        public void onDrop(final int dropIndex, final View dropTarget);
+    }
 
     public ConstrainedDragAndDropView(Context context) {
         super(context);
@@ -42,12 +48,12 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         applyAttrs(context, attrs);
     }
 
-    public int getLayoutId() {
-        return layoutId;
+    public DropListener getDropListener() {
+        return dropListener;
     }
 
-    public void setLayoutId(int layoutId) {
-        this.layoutId = layoutId;
+    public void setDropListener(DropListener dropListener) {
+        this.dropListener = dropListener;
     }
 
     public View getDragHandle() {
@@ -90,7 +96,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         this.allowVerticalDrag = allowVerticalDrag;
     }
 
-    private void applyAttrs(Context context, AttributeSet attrs) {
+    protected void applyAttrs(Context context, AttributeSet attrs) {
         TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.ConstrainedDragAndDropView, 0, 0);
 
 
@@ -107,55 +113,24 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         }
     }
 
-    private void setupDragHandle() {
+    protected void setupDragHandle() {
         this.setOnTouchListener(new DragAreaTouchListener());
     }
 
-    private final class DragAreaTouchListener implements OnTouchListener {
+    protected class DragAreaTouchListener implements OnTouchListener {
         public boolean onTouch(View view, MotionEvent motionEvent) {
 
             switch (motionEvent.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-
-                    if(!dragging && isDragHandleTouch(motionEvent)) {
-                        LinearLayout.LayoutParams lParams = (LinearLayout.LayoutParams) view.getLayoutParams();
-                        pointerId = motionEvent.getPointerId(0);
-                        updateDragPosition(motionEvent);
-                        dragging = true;
-                        Log.d("drag", "drag start");
-                    }
-
+                    onActionDown(view, motionEvent);
                     break;
 
                 case MotionEvent.ACTION_UP:
-                    if (dragging && motionEvent.getPointerId(0) == pointerId) {
-                        dragging = false;
-                        Log.d("drag", "drag end");
-
-                        updateDragPosition(motionEvent);
-                        int dropTargetIndex = findDropTargetIndexUnderDragHandle();
-                        if(dropTargetIndex >= 0) {
-                            Log.d("drag", "drop on target " + dropTargetIndex);
-                            selectDropTarget(dropTargetIndex);
-                            snapDragHandleToDropTarget(dropTargetIndex);
-                        } else {
-                            deselectDropTarget();
-                            snapDragHandleToDropTarget(lastSelectedDropTargetIndex);
-                        }
-                    }
+                    onActionUp(view, motionEvent);
                     break;
 
                case MotionEvent.ACTION_MOVE:
-                    if (dragging && motionEvent.getPointerId(0) == pointerId) {
-                        updateDragPosition(motionEvent);
-                        int dropTargetIndex = findDropTargetIndexUnderDragHandle();
-                        if(dropTargetIndex >= 0) {
-                            Log.d("drag", "hover on target " + dropTargetIndex);
-                            selectDropTarget(dropTargetIndex);
-                        } else {
-                            deselectDropTarget();
-                        }
-                    }
+                    onActionMove(view, motionEvent);
                     break;
 
                 default:
@@ -166,9 +141,61 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         }
     }
 
-    @SuppressLint("NewApi")
-    private void updateDragPosition(MotionEvent motionEvent) {
+    protected void onActionDown(View view, MotionEvent motionEvent) {
+        // if we're not already dragging, and the touch position is on the drag handle,
+        // then start dragging
+        if(!dragging && isDragHandleTouch(motionEvent)) {
+            pointerId = motionEvent.getPointerId(0);
+            updateDragPosition(motionEvent);
+            dragging = true;
+            Log.d("drag", "drag start");
+        }
+    }
 
+    protected void onActionUp(View view, MotionEvent motionEvent) {
+
+        // if we're dragging, then stop dragging
+        if (dragging && motionEvent.getPointerId(0) == pointerId) {
+            updateDragPosition(motionEvent);
+            dragging = false;
+            Log.d("drag", "drag end");
+
+            // find out what drop target, if any, the drag handle was dropped on
+            int dropTargetIndex = findDropTargetIndexUnderDragHandle();
+
+            if(dropTargetIndex >= 0) { // if drop was on a target, select the target
+                Log.d("drag", "drop on target " + dropTargetIndex);
+                selectDropTarget(dropTargetIndex);
+                snapDragHandleToDropTarget(dropTargetIndex);
+                lastDroppedIndex = dropTargetIndex;
+                if(dropListener != null) {
+                    dropListener.onDrop(dropTargetIndex, dropTargets.get(dropTargetIndex));
+                }
+            } else { // if drop was not on a target, re-select the last selected target
+                deselectDropTarget();
+                snapDragHandleToDropTarget(lastDroppedIndex);
+            }
+        }
+    }
+
+    protected void onActionMove(View view, MotionEvent motionEvent) {
+        if (dragging && motionEvent.getPointerId(0) == pointerId) {
+            updateDragPosition(motionEvent);
+            int dropTargetIndex = findDropTargetIndexUnderDragHandle();
+            if(dropTargetIndex >= 0) {
+                Log.d("drag", "hover on target " + dropTargetIndex);
+                selectDropTarget(dropTargetIndex);
+            } else {
+                deselectDropTarget();
+            }
+        }
+    }
+
+    @SuppressLint("NewApi")
+    protected void updateDragPosition(MotionEvent motionEvent) {
+
+        // this is where we constrain the movement of the dragHandle
+        
         if(allowHorizontalDrag) {
             float candidateX = motionEvent.getX() - dragHandle.getWidth() / 2;
             if(candidateX > 0 && candidateX + dragHandle.getWidth() < this.getWidth()) {
@@ -185,24 +212,25 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     }
 
     @SuppressLint("NewApi")
-    private void snapDragHandleToDropTarget(int dropTargetIndex) {
+    protected void snapDragHandleToDropTarget(int dropTargetIndex) {
+        if(dropTargetIndex > -1) {
+            View dropTarget = dropTargets.get(dropTargetIndex);
+            float xCenter = dropTarget.getX() + dropTarget.getWidth() / 2;
+            float yCenter = dropTarget.getY() + dropTarget.getHeight() / 2;
 
-        View dropTarget = dropTargets.get(dropTargetIndex);
-        float xCenter = dropTarget.getX() + dropTarget.getWidth() / 2;
-        float yCenter = dropTarget.getY() + dropTarget.getHeight() / 2;
+            float xOffset = dragHandle.getWidth() / 2;
+            float yOffset = dragHandle.getHeight() / 2;
 
-        float xOffset = dragHandle.getWidth() / 2;
-        float yOffset = dragHandle.getHeight() / 2;
+            float x = xCenter - xOffset;
+            float y = yCenter - yOffset;
 
-        float x = xCenter - xOffset;
-        float y = yCenter - yOffset;
-
-        dragHandle.setX(x);
-        dragHandle.setY(y);
+            dragHandle.setX(x);
+            dragHandle.setY(y);
+        }
     }
 
 
-    private boolean isDragHandleTouch(MotionEvent motionEvent) {
+    protected boolean isDragHandleTouch(MotionEvent motionEvent) {
         Point point = new Point(
             new Float(motionEvent.getRawX()).intValue(),
             new Float(motionEvent.getRawY()).intValue()
@@ -211,24 +239,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         return isPointInView(point, dragHandle);
     }
 
-    int findDropTargetIndex(MotionEvent motionEvent) {
-        int dropTargetIndex = -1;
-
-        Point point = new Point(
-                new Float(motionEvent.getRawX()).intValue(),
-                new Float(motionEvent.getRawY()).intValue()
-        );
-        for(int i = 0; i < dropTargets.size(); i++) {
-            if(isPointInView(point, dropTargets.get(i))) {
-                dropTargetIndex = i;
-                break;
-            }
-        }
-
-        return dropTargetIndex;
-    }
-
-    int findDropTargetIndexUnderDragHandle() {
+    protected int findDropTargetIndexUnderDragHandle() {
         int dropTargetIndex = -1;
         for(int i = 0; i < dropTargets.size(); i++) {
             if(isCollision(dragHandle, dropTargets.get(i))) {
@@ -246,7 +257,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
      * @param view - View to test
      * @return true if the point is in the view, else false
      */
-    private boolean isPointInView(Point point, View view) {
+    protected boolean isPointInView(Point point, View view) {
 
         int[] viewPosition = new int[2];
         view.getLocationOnScreen(viewPosition);
@@ -260,7 +271,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     }
 
     @SuppressLint("NewApi")
-    private boolean isCollision(View view1, View view2) {
+    protected boolean isCollision(View view1, View view2) {
         boolean collision = false;
 
 
@@ -288,13 +299,15 @@ public class ConstrainedDragAndDropView extends LinearLayout {
         return collision;
     }
 
-    private void selectDropTarget(int index) {
-        deselectDropTarget();
-        selectedDropTargetIndex = index;
-        dropTargets.get(selectedDropTargetIndex).setSelected(true);
+    protected void selectDropTarget(int index) {
+        if(index > -1) {
+            deselectDropTarget();
+            selectedDropTargetIndex = index;
+            dropTargets.get(selectedDropTargetIndex).setSelected(true);
+        }
     }
 
-    private void deselectDropTarget() {
+    protected void deselectDropTarget() {
         if(selectedDropTargetIndex > -1) {
             dropTargets.get(selectedDropTargetIndex).setSelected(false);
             lastSelectedDropTargetIndex = selectedDropTargetIndex;
