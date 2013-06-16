@@ -195,7 +195,7 @@ public class ConstrainedDragAndDropView extends LinearLayout {
     protected void updateDragPosition(MotionEvent motionEvent) {
 
         // this is where we constrain the movement of the dragHandle
-        
+
         if(allowHorizontalDrag) {
             float candidateX = motionEvent.getX() - dragHandle.getWidth() / 2;
             if(candidateX > 0 && candidateX + dragHandle.getWidth() < this.getWidth()) {
